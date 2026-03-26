@@ -1,17 +1,5 @@
 import Task from "../models/Task.js";
-
-// F4.4 — AI Task Priority Scoring
-const calculatePriorityScore = (task) => {
-  const now = new Date();
-  const deadline = new Date(task.deadline);
-  const daysLeft = (deadline - now) / (1000 * 60 * 60 * 24);
-
-  const priorityWeight = { URGENT: 40, HIGH: 30, MEDIUM: 20, LOW: 10 };
-  const urgencyWeight = daysLeft <= 1 ? 50 : daysLeft <= 3 ? 35 : daysLeft <= 7 ? 20 : 5;
-  const statusWeight = task.status === "TODO" ? 10 : task.status === "IN_PROGRESS" ? 5 : 0;
-
-  return (priorityWeight[task.priority] || 0) + urgencyWeight + statusWeight;
-};
+import { prioritizeTasks, quadrantSummary } from "../services/taskPriorityService.js";
 
 export const createTask = async (req, res) => {
   try {
@@ -132,7 +120,7 @@ export const deleteTask = async (req, res) => {
 // F4.4 — AI-powered task prioritization
 export const getPrioritizedTasks = async (req, res) => {
   try {
-    const filter = { status: { $ne: "COMPLETED" } };
+    const filter = {};
 
     if (req.user.role === "EMPLOYEE" || req.user.role === "FREELANCER") {
       filter.assignee = req.user.id;
@@ -143,14 +131,16 @@ export const getPrioritizedTasks = async (req, res) => {
       .populate("assignee", "name")
       .populate("project", "name");
 
-    const prioritized = tasks
-      .map(task => ({
-        ...task.toObject(),
-        aiPriorityScore: task.deadline ? calculatePriorityScore(task) : 0
-      }))
-      .sort((a, b) => b.aiPriorityScore - a.aiPriorityScore);
+    const prioritized = prioritizeTasks(tasks);
+    const summary     = quadrantSummary(prioritized);
 
-    res.json({ message: "Tasks ranked by AI priority score", tasks: prioritized });
+    res.json({
+      message          : "Tasks ranked by AI priority score (Eisenhower Matrix)",
+      totalTasks       : tasks.length,
+      activeTasks      : prioritized.length,
+      quadrantSummary  : summary,
+      tasks            : prioritized
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

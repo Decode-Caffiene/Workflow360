@@ -69,7 +69,12 @@ export const login = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  res.json({ message: "Logout successful" });
+  try {
+    await User.findByIdAndUpdate(req.user.id, { lastLogout: new Date() });
+    res.json({ message: "Logout successful" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const getMe = async (req, res) => {

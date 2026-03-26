@@ -1,0 +1,18 @@
+/* index.css */
+@import "tailwindcss";
+
+@theme {
+  /* v4 sometimes struggles with custom arbitrary values like rounded-[2.5rem] */
+  /* Defining them in the theme ensures they compile every time */
+  --radius-huge: 2.5rem;
+  --color-brand-dark: #020617; /* slate-950 */
+}
+
+:root {
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #FDFDFF; /* Matches your EmployeeLayout bg */
+}

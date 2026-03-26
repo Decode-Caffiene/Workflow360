@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* If unrounded corners persist, add this theme block below the import */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+}
+
+/* Ensure no global styles are breaking flex containers */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}

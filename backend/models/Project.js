@@ -1,9 +1,17 @@
 import mongoose from "mongoose";
 
 const projectSchema = new mongoose.Schema({
-  name: String,
+  name: { type: String, required: true },
+  description: String,
   budget: Number,
-  deadline: Date,
+  deadline: { type: Date, required: true },
+  status: {
+    type: String,
+    enum: ["ACTIVE", "COMPLETED", "ON_HOLD", "CANCELLED"],
+    default: "ACTIVE"
+  },
+  manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  requiredSkills: [String],
   freelancers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Freelancer" }]
 }, { timestamps: true });
 

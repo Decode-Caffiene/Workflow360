@@ -6,7 +6,13 @@ const leaveSchema = new mongoose.Schema({
   from: Date,
   to: Date,
   reason: String,
-  status: { type: String, default: "PENDING" }
+  status: {
+    type: String,
+    enum: ["PENDING", "APPROVED", "REJECTED"],
+    default: "PENDING"
+  },
+  approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  comment: String
 }, { timestamps: true });
 
 export default mongoose.model("Leave", leaveSchema);
