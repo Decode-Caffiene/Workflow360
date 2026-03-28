@@ -83,14 +83,17 @@ export const deleteFreelancer = async (req, res) => {
 // POST /api/freelancers/match
 //
 // Body option A — match by projectId (uses project's name + description + skills)
-//   { projectId: "...", topN: 5 }
+//   { projectId: "...", topN: 5, minScore: 0.2 }
 //
 // Body option B — match by raw job description + skills list
-//   { description: "...", requiredSkills: ["React","Node"], topN: 5 }
+//   { description: "...", requiredSkills: ["React","Node"], topN: 5, minScore: 0.2 }
 // ─────────────────────────────────────────────────────────────────────────────
 export const matchFreelancersToProject = async (req, res) => {
   try {
-    const { projectId, description, requiredSkills, topN = 10 } = req.body;
+    const { projectId, description, requiredSkills, topN = 10, minScore } = req.body;
+    const parsedTopN = Number.isFinite(Number(topN)) && Number(topN) > 0
+      ? Math.min(Math.floor(Number(topN)), 50)
+      : 10;
 
     let job = { description: "", requiredSkills: [] };
 
@@ -114,6 +117,10 @@ export const matchFreelancersToProject = async (req, res) => {
       job = { description: description || "", requiredSkills: requiredSkills || [] };
     }
 
+    if (minScore !== undefined && (!Number.isFinite(Number(minScore)) || Number(minScore) < 0 || Number(minScore) > 1)) {
+      return res.status(400).json({ message: "minScore must be a number between 0 and 1" });
+    }
+
     // Fetch all freelancers
     const freelancers = await Freelancer.find().populate("userId", "name email");
 
@@ -122,13 +129,14 @@ export const matchFreelancersToProject = async (req, res) => {
     }
 
     // Run TF-IDF + Cosine Similarity ranking
-    const ranked = rankFreelancers(job, freelancers, topN);
+    const ranked = rankFreelancers({ ...job, minScore }, freelancers, parsedTopN);
 
     res.json({
       message       : "Freelancers ranked by AI skill matching",
       jobDescription: job.description,
       requiredSkills: job.requiredSkills,
       totalCandidates: freelancers.length,
+      minScore      : minScore !== undefined ? Number(minScore) : 0.15,
       topN          : ranked.length,
       matches       : ranked
     });
